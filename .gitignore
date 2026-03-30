@@ -1,0 +1,31 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Entornos virtuales
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.env/
+.venv/
+
+# Archivos de entorno y credenciales (Nunca subir a repo público)
+.env
+.flaskenv
+
+# Archivos Temporales
+*.swp
+*.bak
+*~
+.DS_Store
+
+# Logs
+*.log
+
+# OMITIR REGLAS: Excepciones para subir la data
+# Normalmente ignorariamos *.xlsx, pero queremos versionar la carpeta data
+# !data/
+# !data/CONDUCTORES 1-11.xlsx
