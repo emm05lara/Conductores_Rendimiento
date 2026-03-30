@@ -146,10 +146,9 @@ def preparar_datos(df: pd.DataFrame) -> pd.DataFrame:
 
     # Función para limpiar caracteres monetarios y espacios antes de convertir a numérico
     def limpiar_numeros(serie):
-        if serie.dtype == 'object':
-            # Quita símbolo $, comas de miles y espacios
-            serie = serie.astype(str).str.replace(r'[\$,\s]', '', regex=True)
-        return pd.to_numeric(serie, errors="coerce")
+        # Siempre forzar a string y mantener únicamente números, puntos y el signo negativo
+        serie_cln = serie.astype(str).str.replace(r'[^\d.-]', '', regex=True)
+        return pd.to_numeric(serie_cln, errors="coerce")
 
     # Convertir a numérico limpiando primero — errores producen NaN (no se eliminan)
     df[COL_GANANCIAS] = limpiar_numeros(df[COL_GANANCIAS])
