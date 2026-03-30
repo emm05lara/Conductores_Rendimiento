@@ -8,7 +8,7 @@ import pandas as pd
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Mantengo el nombre de la variable "RUTA_EXCEL" y "NOMBRE_HOJA" para no romper imports en app.py
 RUTA_EXCEL = os.path.join(BASE_DIR, "data", "conductores.csv")
-NOMBRE_HOJA = "BASE DATOS"
+NOMBRE_HOJA = "conductores"
 
 # Nombres exactos de las columnas en tu Excel
 # Ajusta estos valores si los nombres difieren en el archivo real
