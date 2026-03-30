@@ -2,10 +2,10 @@ services:
   - type: web
     name: dashboard-conductores
     env: python
-    buildCommand: "pip install -r requirements.txt"
+    buildCommand: "pip install --upgrade pip setuptools wheel && pip install -r requirements.txt"
     startCommand: "gunicorn app:server"
     plan: free
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
-        value: 3.10.0
+        value: "3.10.14"
