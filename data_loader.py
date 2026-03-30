@@ -92,7 +92,8 @@ def construir_eje_temporal(df: pd.DataFrame) -> pd.DataFrame:
         # Construir etiqueta legible a partir de AÑO y SEM
         def safe_int(x):
             try:
-                return int(x)
+                # Intermediario float para limpiar cosas como '2024.0'
+                return int(float(str(x).replace(",", "")))
             except (ValueError, TypeError):
                 return None
 
@@ -102,17 +103,27 @@ def construir_eje_temporal(df: pd.DataFrame) -> pd.DataFrame:
         # Crear un valor numérico para ordenar cronológicamente
         df["PERIODO_NUM"] = df["_AÑO_INT"] * 100 + df["_SEM_INT"].fillna(0)
         df["PERIODO"] = df["PERIODO_NUM"]
-        df["ETIQUETA_PERIODO"] = (
-            df["_AÑO_INT"].astype(str) + " - Sem " + df["_SEM_INT"].astype(str)
-        )
+        
+        # Formatear la etiqueta quitando los decimales (evitar "2024.0 - Sem 15.0")
+        año_str = df["_AÑO_INT"].fillna(0).astype(int).astype(str).replace("0", "N/A")
+        sem_str = df["_SEM_INT"].fillna(0).astype(int).astype(str).replace("0", "N/A")
+        df["ETIQUETA_PERIODO"] = año_str + " - Sem " + sem_str
+        
         df = df.sort_values("PERIODO_NUM")
         df.drop(columns=["_AÑO_INT", "_SEM_INT", "PERIODO_NUM"], inplace=True)
         print("[OK] Eje temporal construido a partir de AÑO + SEM.")
 
     elif COL_AÑO in df.columns:
-        df["PERIODO"] = df[COL_AÑO]
-        df["ETIQUETA_PERIODO"] = df[COL_AÑO].astype(str)
+        def safe_int_year(x):
+            try:
+                return int(float(str(x).replace(",", "")))
+            except (ValueError, TypeError):
+                return None
+        df["_AÑO_INT"] = df[COL_AÑO].apply(safe_int_year)
+        df["PERIODO"] = df["_AÑO_INT"]
+        df["ETIQUETA_PERIODO"] = df["_AÑO_INT"].fillna(0).astype(int).astype(str).replace("0", "N/A")
         df = df.sort_values("PERIODO")
+        df.drop(columns=["_AÑO_INT"], inplace=True)
         print("[OK] Eje temporal construido solo con AÑO.")
 
     else:
@@ -133,12 +144,23 @@ def preparar_datos(df: pd.DataFrame) -> pd.DataFrame:
     """
     df = construir_eje_temporal(df)
 
-    # Convertir a numérico — errores producen NaN (no se eliminan)
-    df[COL_GANANCIAS] = pd.to_numeric(df[COL_GANANCIAS], errors="coerce")
-    df[COL_META]      = pd.to_numeric(df[COL_META],      errors="coerce")
+    # Función para limpiar caracteres monetarios y espacios antes de convertir a numérico
+    def limpiar_numeros(serie):
+        if serie.dtype == 'object':
+            # Quita símbolo $, comas de miles y espacios
+            serie = serie.astype(str).str.replace(r'[\$,\s]', '', regex=True)
+        return pd.to_numeric(serie, errors="coerce")
 
-    # Asegurar que CONDUCTOR sea string limpio
-    df[COL_CONDUCTOR] = df[COL_CONDUCTOR].astype(str).str.strip()
+    # Convertir a numérico limpiando primero — errores producen NaN (no se eliminan)
+    df[COL_GANANCIAS] = limpiar_numeros(df[COL_GANANCIAS])
+    df[COL_META]      = limpiar_numeros(df[COL_META])
+
+    # Asegurar que CONDUCTOR sea string limpio y tratar nulos
+    df[COL_CONDUCTOR] = df[COL_CONDUCTOR].fillna("Desconocido").astype(str).str.strip()
+
+    # Asegurar que COMENTARIO funcione bien aunque tenga vacíos
+    if COL_COMENTARIO in df.columns:
+        df[COL_COMENTARIO] = df[COL_COMENTARIO].fillna("").astype(str)
 
     return df
 
