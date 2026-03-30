@@ -6,7 +6,8 @@ import pandas as pd
 # =============================================================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-RUTA_EXCEL = os.path.join(BASE_DIR, "data", "CONDUCTORES 1-11.xlsx")
+# Mantengo el nombre de la variable "RUTA_EXCEL" y "NOMBRE_HOJA" para no romper imports en app.py
+RUTA_EXCEL = os.path.join(BASE_DIR, "data", "conductores.csv")
 NOMBRE_HOJA = "BASE DATOS"
 
 # Nombres exactos de las columnas en tu Excel
@@ -25,23 +26,27 @@ COL_SEM           = "SEM"           # columna de semana (si existe)
 # FUNCIONES DE CARGA Y PREPARACIÓN DE DATOS
 # =============================================================================
 
-def cargar_excel(ruta: str, hoja: str) -> pd.DataFrame:
+def cargar_datos(ruta: str) -> pd.DataFrame:
     """
-    Carga el archivo Excel y retorna un DataFrame.
-    Lanza excepciones descriptivas si el archivo o la hoja no existen.
+    Carga el archivo CSV y retorna un DataFrame con manejo de codificación.
+    Lanza excepciones descriptivas si el archivo no existe.
     """
     if not os.path.exists(ruta):
         raise FileNotFoundError(
-            f"No se encontró el archivo Excel en:\n  {ruta}\n"
-            "Verifica que la variable RUTA_EXCEL sea correcta."
+            f"No se encontró el archivo de datos en:\n  {ruta}\n"
+            "Verifica que la variable de ruta sea correcta."
         )
 
     try:
-        df = pd.read_excel(ruta, sheet_name=hoja, engine="openpyxl")
-    except ValueError:
+        # Intentar primero con utf-8
+        df = pd.read_csv(ruta, encoding='utf-8')
+    except UnicodeDecodeError:
+        # Fallback a latin1 si utf-8 falla
+        df = pd.read_csv(ruta, encoding='latin1')
+    except Exception as e:
         raise ValueError(
-            f"La hoja '{hoja}' no existe en el archivo:\n  {ruta}\n"
-            "Verifica que el nombre de la hoja sea exactamente 'BASE DATOS'."
+            f"Error al parsear el CSV:\n  {str(e)}\n"
+            "Verifica la estructura de tu archivo."
         )
 
     print(f"[OK] Archivo cargado: {len(df)} filas, {len(df.columns)} columnas.")
@@ -57,9 +62,9 @@ def validar_columnas(df: pd.DataFrame) -> None:
     faltantes = [c for c in columnas_requeridas if c not in df.columns]
     if faltantes:
         raise KeyError(
-            f"Las siguientes columnas no se encontraron en la hoja '{NOMBRE_HOJA}':\n"
+            f"Las siguientes columnas no se encontraron en los datos cargados:\n"
             f"  {faltantes}\n"
-            "Revisa los nombres de columna en tu Excel y ajusta las variables al inicio del script."
+            "Revisa los nombres de columna en tu CSV y ajusta las variables al inicio del script."
         )
 
 
@@ -143,7 +148,7 @@ def preparar_datos(df: pd.DataFrame) -> pd.DataFrame:
 # =============================================================================
 
 try:
-    df_raw = cargar_excel(RUTA_EXCEL, NOMBRE_HOJA)
+    df_raw = cargar_datos(RUTA_EXCEL)
     validar_columnas(df_raw)
     df_global = preparar_datos(df_raw)
     lista_conductores = sorted(df_global[COL_CONDUCTOR].dropna().unique().tolist())
