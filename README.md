@@ -77,7 +77,7 @@ Como el repositorio ya incluye el archivo `render.yaml` y la inyección por `gun
 1. Sube este repositorio completo a GitHub.
 2. En [Render.com](https://render.com/), crea un **Blueprint** y pégale el repositorio, o bien, crea un **Web Service**.
 3. El `render.yaml` orquestará lo demás:
-   - **Build Command**: `pip install -r requirements.txt`
+   - **Build Command**: `pip install --upgrade pip setuptools wheel && pip install -r requirements.txt`
    - **Start Command**: `gunicorn app:server`
    - Instalará dependencias y tomará el entorno Python correctos automáticamente.
 4. Cada vez que modifiques el Excel, Render redesplegará tu sitio para lucir la data nueva.
